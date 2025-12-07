@@ -278,6 +278,24 @@ HEAD_OUTLINE = (210, 90, 80)
 COLOR_FEATHER_OUT = (80, 110, 175)
 COLOR_FEATHER = (170, 205, 255)
 
+COLOR_FEATHER = (170, 205, 255)
+
+# ===== Devil Arrow Sprite =====
+# 파일 이름이 'boss_arrow.png.png'면 아래 그대로 두고,
+# 'boss_arrow.png'로 이름을 바꿨다면 이 경로도 같이 바꿔 주세요.
+DEVIL_ARROW_IMG = pygame.image.load("assets/boss_arrow.png").convert_alpha()
+
+# 게임 화면에 맞게 크기 조절 (원본이 너무 크면 숫자를 줄이세요)
+DEVIL_ARROW_IMG = pygame.transform.smoothscale(DEVIL_ARROW_IMG, (110, 110))
+
+# 원본이 대각선(왼쪽 아래 -> 오른쪽 위) 방향이라
+# 기준 방향을 "오른쪽"으로 맞춰두고, 실제 각도에 맞게 다시 회전해서 씁니다.
+# 화살 이미지 기본 회전값을 오른쪽 방향 기준으로 맞춘 버전
+
+DEVIL_ARROW_BASE = pygame.transform.rotate(DEVIL_ARROW_IMG, -45)
+
+
+
 ARROW_FEATHER_LEN = 12
 ARROW_FEATHER_W = 10
 ARROW_LENGTH = 105
@@ -410,10 +428,12 @@ class Arrow:
         self.dirx = vx
         self.diry = vy
         self.last_scored_time = -99999
-        self.head_offset = ARROW_LENGTH * 0.55 + ARROW_HEAD_LEN * 0.6
+        self.head_offset = ARROW_LENGTH * 0.45 + ARROW_HEAD_LEN * 0.5
         self.proximity_level = 0
         base_angle_deg = math.degrees(math.atan2(self.vy, self.vx))
+        self.angle_deg = base_angle_deg  # 스프라이트 회전용 각도
         self.image, self.rect, self.shaft_mask, self.head_mask = self._build_surface(base_angle_deg)
+
 
     def _build_surface(self, angle_deg):
         total_len = ARROW_LENGTH + ARROW_HEAD_LEN + 20
@@ -483,9 +503,16 @@ class Arrow:
         self.rect.center = (int(self.x), int(self.y))
 
     def draw(self, surf):
-        surf.blit(self.image, self.rect)
+        # 악마 화살 스프라이트를 현재 이동 각도에 맞게 회전해서 그립니다.
+        # self.rect.center는 기존 충돌 판정용 히트박스의 중심이므로 그대로 사용합니다.
+        sprite_img = pygame.transform.rotate(DEVIL_ARROW_BASE, -self.angle_deg+180)
+        sprite_rect = sprite_img.get_rect(center=self.rect.center)
+        surf.blit(sprite_img, sprite_rect)
+
+        # 디버그용으로 히트박스를 보고 싶으면 SHOW_HITBOX = True로 두세요.
         if SHOW_HITBOX:
             pygame.draw.rect(surf, (80, 180, 90), self.rect, 1)
+
 
     def offscreen(self, play_rect: pygame.Rect):
         pad = 120
